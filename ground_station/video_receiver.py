@@ -8,22 +8,20 @@ from event_bus import EventBus
 # so other processes can grab them.
 # It also checks whether the shutdown event to terminate
 def video_receiver(event_bus: EventBus, shutdown: multiprocessing.Event):
-    VIDEO_URL = ''
-    is_video_captured = False
-
-    while not is_video_captured and not shutdown.is_set():
-        print("Trying to acquire video feed ...")
-        capture = cv2.VideoCapture(VIDEO_URL)
-        is_video_captured, _ = capture.read()
+    VIDEO_URL = 'udp://0.0.0.0:11111'
+    is_frame_captured = False
     
     while not shutdown.is_set():
-        grabbed, frame = capture.read()
-        if grabbed:
-            print('Sending to frame to event bus')
+        if not is_frame_captured:
+            print("Trying to acquire video feed ...")
+            capture = cv2.VideoCapture(VIDEO_URL)
+        else:
             event_bus.emit(EventBus.VIDEO_FRAME, frame)
 
-    print("Shutting down the Video Receiver")
+        is_frame_captured, frame = capture.read()
 
+
+    print("Shutting down the Video Receiver")
     if capture:
         capture.release()
     cv2.destroyAllWindows()
